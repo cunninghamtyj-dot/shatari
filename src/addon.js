@@ -9,6 +9,7 @@ const dateFormat = require('dateformat');
 const BNet = require('./battlenet');
 const RunOnce = require('./runOnce');
 const luaQuote = require('./luaQuote');
+const fetchInterfaceVersions = require('./interfaceVersions');
 
 const RealmState = require('./realmState');
 const Constants = require('./constants');
@@ -414,27 +415,6 @@ table.insert(addonTable.dataLoads, dataLoad)
     logMsg("Finished with region " + region);
 }
 
-async function fetchInterfaceVersion() {
-    let response;
-    try {
-        response = await axios.get('https://raw.githubusercontent.com/DeadlyBossMods/DeadlyBossMods/master/DBM-Core/DBM-Core_Mainline.toc');
-    } catch (e) {
-        response = null;
-        logMsg("Could not fetch interface version..");
-        console.log(e);
-    }
-    if (!response || response.status !== 200) {
-        return null;
-    }
-
-    const match = response.data.match(/^##\s*Interface:\s*([\d\s,]+)/i);
-    if (match) {
-        return match[1];
-    }
-
-    return null;
-}
-
 async function generateBonusToNameId() {
     const BONUSES_PATH = Path.resolve(__dirname, '..', 'bonuses.json');
     const bonusData = JSON.parse(await fs.readFile(BONUSES_PATH));
@@ -519,7 +499,7 @@ addonTable.speciesStats = {${statsLua}}
 }
 
 async function generateToc() {
-    let addonInterface = (await fetchInterfaceVersion()) || '110000';
+    let addonInterface = (await fetchInterfaceVersions()).join(', ');
     let notes = dateFormat(new Date(now), 'dddd, mmmm dS, yyyy');
     let yyyymmdd = dateFormat(new Date(now), 'yyyymmdd');
     let dataFiles = [];
@@ -528,7 +508,7 @@ async function generateToc() {
 
     let toc = `## Interface: ${addonInterface}
 ## Title: Oribos Exchange
-## Notes: ${notes}
+## Notes: Adds auction house prices to tooltips.|nUse /oetooltip for options.|n|n${notes}
 ## OptionalDeps: Auctionator, AuctionLite, LibExtraTip
 ## SavedVariablesPerCharacter: OETooltipsHidden, OETooltipsSettings
 ## Version: 1.3.${yyyymmdd}
@@ -544,6 +524,7 @@ async function generateToc() {
 ## Category-ruRU: Аукционы
 ## Category-zhCN: 拍卖
 ## Category-zhTW: 拍賣
+## AllowLoadGameType standard
 
 libs\\LibExtraTip\\Load.xml
 

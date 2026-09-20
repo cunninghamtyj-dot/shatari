@@ -5,7 +5,7 @@ const dateFormat = require('dateformat');
 
 const Aliveness = require('./aliveness');
 const Constants = require('./constants');
-const ItemKey = require('./itemKey');
+const ItemKeyClass = require('./itemKey');
 const ItemKeySerialize = require('./itemKeySerialize');
 const ItemState = require('./itemState');
 const Runner = require('./runner');
@@ -42,13 +42,15 @@ const realmProcess = new function () {
     /**
      * Given auction data and a realm ID, update our files for that realm.
      *
+     * @param {string} product
      * @param {number} connectedRealmId
      * @param {number} thisSnapshot
      * @param {object} data  The parsed JSON response from the API
      * @return {object} All the item stats from the snapshot, keyed by item key.
      */
-    this.processConnectedRealmAuctions = async function (connectedRealmId, thisSnapshot, data) {
+    this.processConnectedRealmAuctions = async function (product, connectedRealmId, thisSnapshot, data) {
         tooOld = thisSnapshot - Constants.MAX_HISTORY;
+        const ItemKey = new ItemKeyClass(product);
 
         const stats = {};
         const bonusStatItems = {};
@@ -383,6 +385,7 @@ async function main () {
                 let result;
                 try {
                     result = await realmProcess.processConnectedRealmAuctions(
+                        m.data.product,
                         m.data.connectedRealmId,
                         m.data.thisSnapshot,
                         m.data.data,

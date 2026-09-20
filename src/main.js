@@ -787,10 +787,13 @@ function processConnectedRealmAuctions(connectedRealmId, checkStart, thisSnapsho
             reject(err);
         });
 
+        const region = realmList[connectedRealmId] || CommodityRealm.getRegionForRealm(connectedRealmId);
+        const product = api.getProduct(region);
         child.send({
             action: 'start',
             data: {
-                region: realmList[connectedRealmId] || CommodityRealm.getRegionForRealm(connectedRealmId),
+                product,
+                region,
                 itemList,
                 connectedRealmId,
                 checkStart,

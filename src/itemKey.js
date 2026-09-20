@@ -2,12 +2,9 @@ const fs = require('fs');
 const Path = require('path');
 const Constants = require('./constants');
 
-const BONUSES_PATH = Path.resolve(Constants.GAME_DIR(Constants.PRODUCT_MAINLINE), 'bonuses.json');
-const ITEMS_PATH = Path.resolve(Constants.GAME_DIR(Constants.PRODUCT_MAINLINE), 'items.all.json');
-
-module.exports = new function () {
-    const bonusData = JSON.parse(fs.readFileSync(BONUSES_PATH));
-    const itemData = JSON.parse(fs.readFileSync(ITEMS_PATH));
+module.exports = function (product) {
+    const bonusData = JSON.parse(fs.readFileSync(Path.resolve(Constants.GAME_DIR(product), 'bonuses.json')));
+    const itemData = JSON.parse(fs.readFileSync(Path.resolve(Constants.GAME_DIR(product), 'items.all.json')));
 
     /**
      * @typedef {object} Modifier

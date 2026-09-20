@@ -1,9 +1,12 @@
 const https = require('https');
 const axios = require('axios');
+const Constants = require('./constants');
 
 const httpsAgent = new https.Agent({keepAlive: true, maxSockets: 4});
 
 module.exports = function () {
+    const self = this;
+
     // ********************* //
     // ***** CONSTANTS ***** //
     // ********************* //
@@ -68,6 +71,24 @@ module.exports = function () {
             url: 'https://' + region + '.api.blizzard.com' + path,
             validateStatus: (status) => status < 400,
         });
+    };
+
+    /**
+     * Returns the product constant for the given region.
+     *
+     * @param {string} region
+     * @return {string}
+     */
+    this.getProduct = region => {
+        switch (region) {
+            case self.REGION_US:
+            case self.REGION_EU:
+            case self.REGION_TW:
+            case self.REGION_KR:
+                return Constants.PRODUCT_MAINLINE;
+        }
+
+        throw `Unknown region: [${region}]`;
     };
 
     /**

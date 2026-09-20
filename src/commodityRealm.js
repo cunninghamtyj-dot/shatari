@@ -47,12 +47,21 @@ module.exports = new function () {
      * Returns the Blizzard API endpoint for the given realm, commodities or otherwise.
      *
      * @param {number} realm
+     * @param {string} region
      * @returns {string}
      */
-    this.getApiPath = function (realm) {
-        return self.isCommodityRealm(realm) ?
-            '/data/wow/auctions/commodities' :
-            `/data/wow/connected-realm/${realm}/auctions`;
+    this.getApiPath = function (realm, region) {
+        if (self.isCommodityRealm(realm)) {
+            return '/data/wow/auctions/commodities';
+        }
+
+        if (api.hasFactionHouses(region)) {
+            const parts = api.stripFactionMask(realm);
+
+            return `/data/wow/connected-realm/${parts.realm}/auctions/${parts.house}`;
+        }
+
+        return `/data/wow/connected-realm/${realm}/auctions`;
     };
 
     /**

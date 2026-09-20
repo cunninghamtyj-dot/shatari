@@ -15,6 +15,8 @@ module.exports = new function () {
     this.PRODUCT_MAINLINE = 'mainline';
     this.PRODUCT_FOREVER = 'forever';
 
+    this.REALM_ID_MASK = 0x3fff;
+
     this.CLASS_WEAPON = 2;
     this.CLASS_ARMOR = 4;
     this.CLASS_BATTLE_PET = 17;

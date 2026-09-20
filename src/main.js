@@ -25,7 +25,16 @@ Date.prototype.toJSON = function () {
 };
 
 const api = new BNet();
-const regions = [api.REGION_US, api.REGION_EU, api.REGION_TW, api.REGION_KR];
+const regions = [
+    api.REGION_US,
+    api.REGION_EU,
+    api.REGION_TW,
+    api.REGION_KR,
+//    api.REGION_US_FOREVER,
+//    api.REGION_EU_FOREVER,
+//    api.REGION_TW_FOREVER,
+//    api.REGION_KR_FOREVER,
+];
 
 const CONCURRENT_REALM_LIMIT = 4;
 
@@ -128,8 +137,13 @@ async function main() {
     logMsg("Initializing realm timers.");
     let initPromises = [];
     realmIds.forEach(realmId => initPromises.push(initRealmCheck(realmId)));
-    CommodityRealm.getRealmIds().forEach(realmId => initPromises.push(initRealmCheck(realmId)));
-    regions.forEach(region => initPromises.push(initTokenCheck(region)));
+    regions
+        .map(CommodityRealm.getRealmForRegion)
+        .filter(realmId => !!realmId)
+        .forEach(realmId => initPromises.push(initRealmCheck(realmId)));
+    regions
+        .filter(region => api.getProduct(region) !== Constants.PRODUCT_FOREVER)
+        .forEach(region => initPromises.push(initTokenCheck(region)));
     await Promise.all(initPromises);
     initPromises = undefined;
     logQueueStatus();
@@ -190,12 +204,17 @@ async function initLists(onlyRegion) {
  */
 function logMsg(message, realm) {
     const date = dateFormat(new Date(), 'yyyy-mm-dd HH:MM:ss');
+    let prefix = '';
     if (realm) {
-        message = (realmList[realm] || CommodityRealm.getRegionForRealm(realm) || 'unknown').toUpperCase() +
-            " realm " + realm + " " + message;
+        const region = realmList[realm] || CommodityRealm.getRegionForRealm(realm);
+        prefix = ' ' + (region || 'unknown').toUpperCase() + ` realm ${realm}`;
+        if (api.hasFactionHouses(region)) {
+            const factionData = api.stripFactionMask(realm);
+            prefix += ` (${factionData.realm} ${factionData.faction})`;
+        }
     }
 
-    console.log(date + ' ' + message);
+    console.log(`${date}${prefix} ${message}`);
 }
 
 //            //
@@ -346,7 +365,12 @@ async function updateDeals(region) {
 
     logMsg(region + " deals: starting.");
     let realmIds = Object.keys(realmList).filter(realmId => realmList[realmId] === region).map(id => parseInt(id));
-    realmIds.push(CommodityRealm.getRealmForRegion(region));
+    {
+        const commRealmId = CommodityRealm.getRealmForRegion(region);
+        if (commRealmId) {
+            realmIds.push(commRealmId);
+        }
+    }
 
     let seenPrices = {};      // Every above-0 price we encounter for 1-stack items.
     let availablePrices = {}; // Every above-0 price we encounter for 1-stack items currently for sale.
@@ -639,7 +663,7 @@ function setPendingTimer(connectedRealmId, realmState) {
 //                  //
 
 /**
- * Fetches and returns a full realm list from the API.
+ * Returns a map of connectedId => region.
  *
  * @param {string|undefined} [onlyRegion]
  * @return {object}
@@ -647,18 +671,9 @@ function setPendingTimer(connectedRealmId, realmState) {
 async function fetchRealmList(onlyRegion) {
     const result = {};
 
-    for (let region, x = 0; region = regions[x]; x++) {
-        if (onlyRegion && onlyRegion !== region) {
-            continue;
-        }
-        logMsg("Fetching " + region + " realm list");
-        const response = await api.fetch(region, '/data/wow/connected-realm/index');
-        response.data.connected_realms.forEach(realmRec => {
-            const realmId = realmRec.href.match(/wow\/connected-realm\/(\d+)/)[1];
-
-            result[realmId] = region;
-        });
-    }
+    Object.values(JSON.parse(await fs.readFile(Path.resolve(__dirname, '..', 'realms', 'realm-list.json'))))
+        .filter(realm => (realm.region === (onlyRegion ?? realm.region)) && regions.includes(realm.region))
+        .forEach(realm => result[realm.connectedId] = realm.region)
 
     return result;
 }
@@ -700,7 +715,7 @@ async function processConnectedRealm(connectedRealmId) {
     shortRealmState.lastCheck = checkStart;
     let response;
     try {
-        response = await api.fetch(region, CommodityRealm.getApiPath(connectedRealmId), {}, headers);
+        response = await api.fetch(region, CommodityRealm.getApiPath(connectedRealmId, region), {}, headers);
     } catch (e) {
         response = {status: 500};
         logMsg("Error during data fetch", connectedRealmId);

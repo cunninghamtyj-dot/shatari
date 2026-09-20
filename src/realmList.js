@@ -189,8 +189,6 @@ async function fetchRealmList() {
         LOCKED: 7,
     };
 
-    const MAX_REALM_ID = 0x3fff;
-
     const realmPromises = [];
     const seenConnections = {};
 
@@ -200,8 +198,8 @@ async function fetchRealmList() {
         logMsg("Found " + response.data.connected_realms.length + " connected realms in " + region + ".");
 
         response.data.connected_realms.forEach(connectedRealmRec => {
-            const connectedRealmId = connectedRealmRec.href.match(/wow\/connected-realm\/(\d+)/)[1];
-            if (parseInt(connectedRealmId) > MAX_REALM_ID) {
+            const connectedRealmId = parseInt(connectedRealmRec.href.match(/wow\/connected-realm\/(\d+)/)[1]);
+            if ((connectedRealmId & Constants.REALM_ID_MASK) !== connectedRealmId) {
                 logMsg(`Skipping connected realm ID too big: ${connectedRealmId}`);
                 return;
             }
@@ -211,8 +209,8 @@ async function fetchRealmList() {
                 logMsg("Loaded " + region + " connected realm " + connectedRealmId + " with " + response.data.realms.length + " realms.");
 
                 response.data.realms.forEach(realmRec => api.getFactionMasks(region).forEach(factionMask => {
-                    if (realmRec.id > MAX_REALM_ID) {
-                        logMsg(`Skipping connected realm ID too big: ${realmRec.id}`);
+                    if ((realmRec.id & Constants.REALM_ID_MASK) !== realmRec.id) {
+                        logMsg(`Skipping realm ID too big: ${realmRec.id}`);
                         return;
                     }
 
@@ -221,7 +219,7 @@ async function fetchRealmList() {
                         slug: realmRec.slug + (factionMask.key ? '-' + factionMask.key.substring(0, 1) : ''),
                         population: POPULATION[response.data.population?.type] ?? 0,
                         id: realmRec.id | factionMask.mask,
-                        connectedId: parseInt(connectedRealmId) | factionMask.mask,
+                        connectedId: connectedRealmId | factionMask.mask,
                     };
                     if (factionMask.key) {
                         realmResult.faction = factionMask.key;

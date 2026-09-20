@@ -149,6 +149,49 @@ module.exports = function () {
         throw `Unsupported region: [${region}]`;
     };
 
+    /**
+     * Returns whether this region has faction-split auction houses per realm.
+     *
+     * @param {string} region
+     * @return {boolean}
+     */
+    this.hasFactionHouses = region => self.getFactionMasks(region).length > 1;
+
+    /**
+     * Processes a realm ID to pull out the faction name and house ID. The realm is assumed to be in a faction-houses
+     * region.
+     *
+     * @param {number} realm
+     * @return {{realm: number, faction: string|undefined, house: number|undefined}}
+     */
+    this.stripFactionMask = realm => {
+        if ((realm & MASK_ALLIANCE) === MASK_ALLIANCE) {
+            return {
+                realm: realm ^ MASK_ALLIANCE,
+                faction: 'alliance',
+                house: HOUSE_ALLIANCE,
+            };
+        }
+
+        if ((realm & MASK_HORDE) === MASK_HORDE) {
+            return {
+                realm: realm ^ MASK_HORDE,
+                faction: 'horde',
+                house: HOUSE_HORDE,
+            };
+        }
+
+        if ((realm & MASK_NEUTRAL) === MASK_NEUTRAL) {
+            return {
+                realm: realm ^ MASK_NEUTRAL,
+                faction: 'neutral',
+                house: HOUSE_NEUTRAL,
+            };
+        }
+
+        return {realm};
+    };
+
     // ------- //
     // PRIVATE //
     // ------- //

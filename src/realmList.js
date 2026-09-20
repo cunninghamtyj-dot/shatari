@@ -8,7 +8,16 @@ const RunOnce = require('./runOnce');
 const ShatariWriter = require('./shatariWriter');
 
 const api = new BNet();
-const regions = [api.REGION_US, api.REGION_EU, api.REGION_TW, api.REGION_KR];
+const regions = [
+    api.REGION_US,
+    api.REGION_EU,
+    api.REGION_TW,
+    api.REGION_KR,
+//    api.REGION_US_FOREVER,
+//    api.REGION_EU_FOREVER,
+//    api.REGION_TW_FOREVER,
+//    api.REGION_KR_FOREVER,
+];
 const Constants = require('./constants');
 
 async function main() {
@@ -97,12 +106,16 @@ async function main() {
             .map(realm => {
                 const nameObject = realmList.names.enus[realm.id] ?? {name: realm.slug};
                 const result = {
+                    product: api.getProduct(realm.region),
                     region: realm.region,
                     slug: realm.slug,
                     name: nameObject.name,
                 };
                 if (nameObject.nativeName) {
                     result.nativeName = nameObject.nativeName;
+                }
+                if (realm.faction) {
+                    result.faction = realm.faction;
                 }
 
                 return result;
@@ -176,6 +189,8 @@ async function fetchRealmList() {
         LOCKED: 7,
     };
 
+    const MAX_REALM_ID = 0x3fff;
+
     const realmPromises = [];
     const seenConnections = {};
 
@@ -186,19 +201,31 @@ async function fetchRealmList() {
 
         response.data.connected_realms.forEach(connectedRealmRec => {
             const connectedRealmId = connectedRealmRec.href.match(/wow\/connected-realm\/(\d+)/)[1];
+            if (parseInt(connectedRealmId) > MAX_REALM_ID) {
+                logMsg(`Skipping connected realm ID too big: ${connectedRealmId}`);
+                return;
+            }
 
             realmPromises.push(api.fetch(region, '/data/wow/connected-realm/' + connectedRealmId, {locale: null}).then(response => {
                 seenConnections[connectedRealmId] = response.data.realms.length;
                 logMsg("Loaded " + region + " connected realm " + connectedRealmId + " with " + response.data.realms.length + " realms.");
 
-                response.data.realms.forEach(realmRec => {
+                response.data.realms.forEach(realmRec => api.getFactionMasks(region).forEach(factionMask => {
+                    if (realmRec.id > MAX_REALM_ID) {
+                        logMsg(`Skipping connected realm ID too big: ${realmRec.id}`);
+                        return;
+                    }
+
                     const realmResult = {
                         region: region,
-                        slug: realmRec.slug,
+                        slug: realmRec.slug + (factionMask.key ? '-' + factionMask.key.substring(0, 1) : ''),
                         population: POPULATION[response.data.population?.type] ?? 0,
-                        id: realmRec.id,
-                        connectedId: parseInt(connectedRealmId),
+                        id: realmRec.id | factionMask.mask,
+                        connectedId: parseInt(connectedRealmId) | factionMask.mask,
                     };
+                    if (factionMask.key) {
+                        realmResult.faction = factionMask.key;
+                    }
 
                     // Blizz uses "enUS" for the realm locale format, but "en_US" everywhere else, ugh.
                     const realmLocale = api.localeParse(realmRec.locale ?? 'xxxx');
@@ -215,7 +242,7 @@ async function fetchRealmList() {
                             nameRec.nativeName = nativeName;
                         }
                         result.names[locale] ??= {};
-                        result.names[locale][realmRec.id] = nameRec;
+                        result.names[locale][realmResult.id] = nameRec;
                     });
 
                     if (!result.ids.hasOwnProperty(realmResult.id)) {
@@ -236,7 +263,7 @@ async function fetchRealmList() {
                             result.ids[realmResult.id].connectedId + " (count " + seenConnections[result.ids[realmResult.id].connectedId] +
                             ") and ignoring " + realmResult.connectedId + " (count " + response.data.realms.length + ")");
                     }
-                });
+                }));
             }));
         });
     }

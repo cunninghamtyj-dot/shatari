@@ -13,6 +13,7 @@ module.exports = new function () {
     this.GAME_DIR = product => Path.resolve(__dirname, '..', 'game', product);
 
     this.PRODUCT_MAINLINE = 'mainline';
+    this.PRODUCT_FOREVER = 'forever';
 
     this.CLASS_WEAPON = 2;
     this.CLASS_ARMOR = 4;
@@ -38,7 +39,9 @@ module.exports = new function () {
     // Items from expansions before this value are skipped when being selective about variation inclusion.
     this.VARIATION_EXPANSION_CUTOFF = {
         mainline: 12,
+        forever: 0,
     };
 
+    // This is only used in some scaling bonuses, so mainline is fine.
     this.PLAYER_LEVEL_CAP = 90;
 };

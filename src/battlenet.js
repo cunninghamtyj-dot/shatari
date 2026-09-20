@@ -15,6 +15,18 @@ module.exports = function () {
     this.REGION_EU = 'eu';
     this.REGION_TW = 'tw';
     this.REGION_KR = 'kr';
+    this.REGION_US_FOREVER = 'usf';
+    this.REGION_EU_FOREVER = 'euf';
+    this.REGION_TW_FOREVER = 'twf';
+    this.REGION_KR_FOREVER = 'krf';
+
+    const MASK_ALLIANCE = 0x8000;
+    const MASK_HORDE = 0xc000;
+    const MASK_NEUTRAL = 0;
+
+    const HOUSE_ALLIANCE = 2;
+    const HOUSE_HORDE = 6;
+    const HOUSE_NEUTRAL = 7;
 
     // ********************* //
     // ***** VARIABLES ***** //
@@ -86,6 +98,11 @@ module.exports = function () {
             case self.REGION_TW:
             case self.REGION_KR:
                 return Constants.PRODUCT_MAINLINE;
+            case self.REGION_US_FOREVER:
+            case self.REGION_EU_FOREVER:
+            case self.REGION_TW_FOREVER:
+            case self.REGION_KR_FOREVER:
+                return Constants.PRODUCT_FOREVER;
         }
 
         throw `Unknown region: [${region}]`;
@@ -109,6 +126,27 @@ module.exports = function () {
      */
     this.localeParse = function (locale) {
         return locale.toLowerCase().replace(/_/g, '').substr(0, 4);
+    };
+
+    /**
+     * Returns the list of faction masks for this region.
+     *
+     * @param {string} region
+     * @return {{key: string|null, mask: number}[]}
+     */
+    this.getFactionMasks = region => {
+        switch (self.getProduct(region)) {
+            case Constants.PRODUCT_MAINLINE:
+                return [{key: null, mask: 0}];
+            case Constants.PRODUCT_FOREVER:
+                return [
+                    {key: 'alliance', mask: MASK_ALLIANCE},
+                    {key: 'horde', mask: MASK_HORDE},
+                    {key: 'neutral', mask: MASK_NEUTRAL},
+                ];
+        }
+
+        throw `Unsupported region: [${region}]`;
     };
 
     // ------- //
@@ -156,6 +194,8 @@ module.exports = function () {
         switch (self.getProduct(region)) {
             case Constants.PRODUCT_MAINLINE:
                 return region;
+            case Constants.PRODUCT_FOREVER:
+                return 'classicann-' + region.substring(0, 2); // TODO: using classic anniversary for now
         }
 
         throw `Unsupported region: [${region}]`;
@@ -171,6 +211,8 @@ module.exports = function () {
         switch (self.getProduct(region)) {
             case Constants.PRODUCT_MAINLINE:
                 return region;
+            case Constants.PRODUCT_FOREVER:
+                return region.substring(0, 2);
         }
 
         throw `Unsupported region: [${region}]`;

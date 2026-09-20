@@ -40,7 +40,6 @@ const TOKEN_INTERVAL = 20 * Constants.MS_MINUTE + 10 * Constants.MS_SEC;
 let aliveness;
 let realmList = {};
 let itemList = {};
-let currentExpansion;
 let dealsLastRun = {};
 let dealsRunning = false;
 let boundItemsLastChecked;
@@ -165,18 +164,21 @@ async function main() {
 /**
  * Initializes our global list variables.
  *
- * @param {string|undefined} [region]
+ * @param {string|undefined} [onlyRegion]
  * @return {Promise<void>}
  */
-async function initLists(region) {
-    // Get item list
-    let listPath = Path.resolve(Constants.GAME_DIR(Constants.PRODUCT_MAINLINE), 'items.all.json');
-    let listJson = await fs.readFile(listPath);
-    itemList = JSON.parse(listJson);
-    Object.values(itemList).forEach(item => currentExpansion = Math.max(currentExpansion || 0, item.expansion || 0));
+async function initLists(onlyRegion) {
+    // Get item lists
+    const products = new Set(regions.filter(region => region === (onlyRegion ?? region)).map(api.getProduct));
+
+    for (const product of products) {
+        const listPath = Path.resolve(Constants.GAME_DIR(product), 'items.all.json');
+        const listJson = await fs.readFile(listPath);
+        itemList[product] = JSON.parse(listJson);
+    }
 
     // Get realm list
-    realmList = await fetchRealmList(region);
+    realmList = await fetchRealmList(onlyRegion);
     //realmList = {54: 'us'};
 }
 
@@ -294,34 +296,38 @@ async function updateBoundItems() {
     boundItemsLastChecked = Date.now();
     logMsg('bound items: starting.');
 
-    let boundItems = new Set();
+    let boundItems = {};
 
     let regionsLeft = regions.slice();
     while (regionsLeft.length) {
         aliveness.checkIn();
-        let region = regionsLeft.shift();
+        const region = regionsLeft.shift();
+        const product = api.getProduct(region);
         logMsg(`bound items: getting ${region} region state.`);
         let regionState = await RegionState.get(region);
         if (!regionState || !regionState.items) {
             continue;
         }
+        boundItems[product] ??= new Set();
         Object.keys(regionState.items).forEach(itemKey => {
             let parsedKey = ItemKeySerialize.parse(itemKey);
-            let item = itemList[parsedKey.itemId];
+            let item = itemList[product][parsedKey.itemId];
             if (item?.bop) {
-                boundItems.add(parsedKey.itemId);
+                boundItems[product].add(parsedKey.itemId);
             }
         });
     }
 
     aliveness.checkIn();
-    boundItems = Array.from(boundItems.values()).sort((a, b) => a - b).map(n => `${n}`);
-    logMsg(`bound items: found ${boundItems.length} bound items in region states.`);
+    await Promise.all(Object.keys(boundItems).map(product => {
+        boundItems[product] = Array.from(boundItems[product].values()).sort((a, b) => a - b).map(n => `${n}`);
+        logMsg(`bound items: found ${boundItems[product].length} bound items in ${product} region states.`);
 
-    let listJson = JSON.stringify(boundItems);
-    let path = Path.resolve(Constants.GAME_DIR(Constants.PRODUCT_MAINLINE), 'ids.bound.json');
-    await ShatariWriter(path, listJson);
-    logMsg(`bound items: ids.bound.json file updated.`);
+        return ShatariWriter(
+            Path.resolve(Constants.GAME_DIR(product), 'ids.bound.json'),
+            JSON.stringify(boundItems[product]),
+        );
+    }));
 
     boundItemsLastChecked = Date.now();
     logMsg('bound items: finished.');
@@ -334,6 +340,7 @@ async function updateBoundItems() {
  * @returns {Promise<void>}
  */
 async function updateDeals(region) {
+    const product = api.getProduct(region);
     dealsLastRun[region] = Date.now();
     dealsRunning = true;
 
@@ -368,7 +375,7 @@ async function updateDeals(region) {
             let price = realmState.summary[itemKey][1];
             let quantity = itemSnapshot === realmState.snapshot ? realmState.summary[itemKey][2] : 0;
             let parsedKey = ItemKeySerialize.parse(itemKey);
-            let item = itemList[parsedKey.itemId];
+            let item = itemList[product][parsedKey.itemId];
 
             // Only unstackable items are valid for deals, since stackable items are cross-realm anyway.
             if (isCommodityRealm || !item || item.stack > 1) {
@@ -408,7 +415,7 @@ async function updateDeals(region) {
             if (
                 parsedKey.itemId === Constants.ITEM_PET_CAGE ||
                 !parsedKey.itemLevel ||
-                !(itemList[parsedKey.itemId]?.expansion < Constants.VARIATION_EXPANSION_CUTOFF)
+                !(itemList[product][parsedKey.itemId]?.expansion < Constants.VARIATION_EXPANSION_CUTOFF[product])
             ) {
                 regionState.arbitrage[itemKey] = {
                     realms: offered.length,
@@ -794,7 +801,7 @@ function processConnectedRealmAuctions(connectedRealmId, checkStart, thisSnapsho
             data: {
                 product,
                 region,
-                itemList,
+                itemList: itemList[product],
                 connectedRealmId,
                 checkStart,
                 thisSnapshot,

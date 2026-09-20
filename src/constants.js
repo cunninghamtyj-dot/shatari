@@ -36,7 +36,9 @@ module.exports = new function () {
     this.LOCALES = ['enus', 'dede', 'eses', 'frfr', 'itit', 'ptbr', 'ruru', 'zhtw', 'kokr', 'esmx'];
 
     // Items from expansions before this value are skipped when being selective about variation inclusion.
-    this.VARIATION_EXPANSION_CUTOFF = 12;
+    this.VARIATION_EXPANSION_CUTOFF = {
+        mainline: 12,
+    };
 
     this.PLAYER_LEVEL_CAP = 90;
 };

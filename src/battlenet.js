@@ -47,7 +47,7 @@ module.exports = function () {
         }
 
         params = params || {};
-        params.namespace = params.namespace || ('dynamic-' + region);
+        params.namespace = params.namespace || ('dynamic-' + getRegionNamespace(region));
         if (params.locale !== null) {
             params.locale = params.locale || 'en_US';
         }
@@ -68,7 +68,7 @@ module.exports = function () {
             headers: headers,
             httpsAgent: httpsAgent,
             params: params,
-            url: 'https://' + region + '.api.blizzard.com' + path,
+            url: 'https://' + getRegionSubdomain(region) + '.api.blizzard.com' + path,
             validateStatus: (status) => status < 400,
         });
     };
@@ -145,4 +145,34 @@ module.exports = function () {
 
         return clientCredentials.token;
     }
+
+    /**
+     * Returns the region suffix for the api namespace for the given region.
+     *
+     * @param {string} region
+     * @return {string}
+     */
+    const getRegionNamespace = region => {
+        switch (self.getProduct(region)) {
+            case Constants.PRODUCT_MAINLINE:
+                return region;
+        }
+
+        throw `Unsupported region: [${region}]`;
+    };
+
+    /**
+     * Returns the api subdomain for the given region.
+     *
+     * @param {string} region
+     * @return {string}
+     */
+    const getRegionSubdomain = region => {
+        switch (self.getProduct(region)) {
+            case Constants.PRODUCT_MAINLINE:
+                return region;
+        }
+
+        throw `Unsupported region: [${region}]`;
+    };
 };

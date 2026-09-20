@@ -170,7 +170,7 @@ async function main() {
  */
 async function initLists(region) {
     // Get item list
-    let listPath = Path.resolve(__dirname, '..', 'items.all.json');
+    let listPath = Path.resolve(Constants.GAME_DIR(Constants.PRODUCT_MAINLINE), 'items.all.json');
     let listJson = await fs.readFile(listPath);
     itemList = JSON.parse(listJson);
     Object.values(itemList).forEach(item => currentExpansion = Math.max(currentExpansion || 0, item.expansion || 0));
@@ -319,7 +319,7 @@ async function updateBoundItems() {
     logMsg(`bound items: found ${boundItems.length} bound items in region states.`);
 
     let listJson = JSON.stringify(boundItems);
-    let path = Path.resolve(__dirname, '..', 'ids.bound.json');
+    let path = Path.resolve(Constants.GAME_DIR(Constants.PRODUCT_MAINLINE), 'ids.bound.json');
     await ShatariWriter(path, listJson);
     logMsg(`bound items: ids.bound.json file updated.`);
 

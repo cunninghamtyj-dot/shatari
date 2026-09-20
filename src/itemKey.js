@@ -2,8 +2,8 @@ const fs = require('fs');
 const Path = require('path');
 const Constants = require('./constants');
 
-const BONUSES_PATH = Path.resolve(__dirname, '..', 'bonuses.json');
-const ITEMS_PATH = Path.resolve(__dirname, '..', 'items.all.json');
+const BONUSES_PATH = Path.resolve(Constants.GAME_DIR(Constants.PRODUCT_MAINLINE), 'bonuses.json');
+const ITEMS_PATH = Path.resolve(Constants.GAME_DIR(Constants.PRODUCT_MAINLINE), 'items.all.json');
 
 module.exports = new function () {
     const bonusData = JSON.parse(fs.readFileSync(BONUSES_PATH));

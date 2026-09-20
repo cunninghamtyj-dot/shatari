@@ -3,6 +3,7 @@
 cd "$( dirname "${BASH_SOURCE[0]}" )"
 
 JSON=public-json
+GAME=game/mainline
 
 TMPFILE=$(mktemp)
 trap "rm -f $TMPFILE" EXIT
@@ -21,7 +22,7 @@ gzbr () {
 
 date
 
-cat items.all.json | jq -c $(sed -e 's/\[/{/g' -e 's/\]/}/g' ids.bound.json) > $TMPFILE
+cat $GAME/items.all.json | jq -c $(sed -e 's/\[/{/g' -e 's/\]/}/g' $GAME/ids.bound.json) > $TMPFILE
 diff -q $TMPFILE $JSON/items.bound.json
 if [ $? -ne 0 ]; then
   rm $JSON/items.bound.json $JSON/items.bound.json.gz $JSON/items.bound.json.br
@@ -30,8 +31,9 @@ if [ $? -ne 0 ]; then
   gzbr $JSON/items.bound.json
 fi
 
-for fn in names.bound.*.json; do
-  cat $fn | jq -c $(sed -e 's/\[/{/g' -e 's/\]/}/g' ids.bound.json) > $TMPFILE
+for pth in $GAME/names.bound.*.json; do
+  fn=$(basename "$pth")
+  cat $pth | jq -c $(sed -e 's/\[/{/g' -e 's/\]/}/g' $GAME/ids.bound.json) > $TMPFILE
   diff -q $TMPFILE $JSON/$fn
   if [ $? -ne 0 ]; then
     rm $JSON/${fn} $JSON/${fn}.gz $JSON/${fn}.br

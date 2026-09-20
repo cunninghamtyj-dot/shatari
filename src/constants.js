@@ -10,6 +10,9 @@ module.exports = new function () {
 
     this.DATA_DIR = Path.resolve(__dirname, '..', 'data');
     this.API_DIR = Path.resolve(__dirname, '..', 'api');
+    this.GAME_DIR = product => Path.resolve(__dirname, '..', 'game', product);
+
+    this.PRODUCT_MAINLINE = 'mainline';
 
     this.CLASS_WEAPON = 2;
     this.CLASS_ARMOR = 4;
@@ -36,4 +39,4 @@ module.exports = new function () {
     this.VARIATION_EXPANSION_CUTOFF = 12;
 
     this.PLAYER_LEVEL_CAP = 90;
-}
+};

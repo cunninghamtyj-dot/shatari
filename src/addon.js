@@ -43,7 +43,7 @@ async function main() {
     realmList = JSON.parse(await fs.readFile(listPath));
     logMsg('' + Object.keys(realmList).length + ' realms in list.');
 
-    listPath = Path.resolve(__dirname, '..', 'items.all.json');
+    listPath = Path.resolve(Constants.GAME_DIR(Constants.PRODUCT_MAINLINE), 'items.all.json');
     itemList = JSON.parse(await fs.readFile(listPath));
     logMsg('' + Object.keys(itemList).length + ' items in list.');
 
@@ -416,7 +416,7 @@ table.insert(addonTable.dataLoads, dataLoad)
 }
 
 async function generateBonusToNameId() {
-    const BONUSES_PATH = Path.resolve(__dirname, '..', 'bonuses.json');
+    const BONUSES_PATH = Path.resolve(Constants.GAME_DIR(Constants.PRODUCT_MAINLINE), 'bonuses.json');
     const bonusData = JSON.parse(await fs.readFile(BONUSES_PATH));
 
     let namesLua = [];
@@ -474,7 +474,7 @@ addonTable.getNameId = getNameId
 }
 
 async function generateSpeciesStats() {
-    const SPECIES_PATH = Path.resolve(__dirname, '..', 'battlepets.json');
+    const SPECIES_PATH = Path.resolve(Constants.GAME_DIR(Constants.PRODUCT_MAINLINE), 'battlepets.json');
     const petData = JSON.parse(await fs.readFile(SPECIES_PATH));
 
     let statsLua = ['[0]={8,8,8}'];

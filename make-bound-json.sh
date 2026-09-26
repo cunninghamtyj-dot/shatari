@@ -2,7 +2,7 @@
 
 cd "$( dirname "${BASH_SOURCE[0]}" )"
 
-JSON=public-json
+JSON=public-json/mainline
 GAME=game/mainline
 
 TMPFILE=$(mktemp)

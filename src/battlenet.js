@@ -132,17 +132,17 @@ module.exports = function () {
      * Returns the list of faction masks for this region.
      *
      * @param {string} region
-     * @return {{key: string|null, mask: number}[]}
+     * @return {{key: string|undefined, mask: number, house: number|undefined}[]}
      */
     this.getFactionMasks = region => {
         switch (self.getProduct(region)) {
             case Constants.PRODUCT_MAINLINE:
-                return [{key: null, mask: 0}];
+                return [{key: undefined, mask: 0, house: undefined}];
             case Constants.PRODUCT_FOREVER:
                 return [
-                    {key: 'alliance', mask: MASK_ALLIANCE},
-                    {key: 'horde', mask: MASK_HORDE},
-                    {key: 'neutral', mask: MASK_NEUTRAL},
+                    {key: 'alliance', mask: MASK_ALLIANCE, house: HOUSE_ALLIANCE},
+                    {key: 'horde', mask: MASK_HORDE, house: HOUSE_HORDE},
+                    {key: 'neutral', mask: MASK_NEUTRAL, house: HOUSE_NEUTRAL},
                 ];
         }
 
@@ -161,36 +161,17 @@ module.exports = function () {
      * Processes a realm ID to pull out the faction name and house ID. The realm is assumed to be in a faction-houses
      * region.
      *
+     * @param {string} region
      * @param {number} realm
      * @return {{realm: number, faction: string|undefined, house: number|undefined}}
      */
-    this.stripFactionMask = realm => {
-        if ((realm & MASK_ALLIANCE) === MASK_ALLIANCE) {
-            return {
-                realm: realm ^ MASK_ALLIANCE,
-                faction: 'alliance',
-                house: HOUSE_ALLIANCE,
-            };
-        }
-
-        if ((realm & MASK_HORDE) === MASK_HORDE) {
-            return {
-                realm: realm ^ MASK_HORDE,
-                faction: 'horde',
-                house: HOUSE_HORDE,
-            };
-        }
-
-        if ((realm & MASK_NEUTRAL) === MASK_NEUTRAL) {
-            return {
-                realm: realm ^ MASK_NEUTRAL,
-                faction: 'neutral',
-                house: HOUSE_NEUTRAL,
-            };
-        }
-
-        return {realm};
-    };
+    this.stripFactionMask = (region, realm) => self.getFactionMasks(region)
+        .filter(mask => (realm & ~Constants.REALM_ID_MASK) === mask.mask)
+        .map(mask => ({
+            realm: realm & Constants.REALM_ID_MASK,
+            faction: mask.key,
+            house: mask.house,
+        }))[0] ?? {realm};
 
     // ------- //
     // PRIVATE //
@@ -237,8 +218,8 @@ module.exports = function () {
         switch (self.getProduct(region)) {
             case Constants.PRODUCT_MAINLINE:
                 return region;
-            case Constants.PRODUCT_FOREVER:
-                return 'classicann-' + region.substring(0, 2); // TODO: using classic anniversary for now
+            //case Constants.PRODUCT_FOREVER:
+            //    return 'classicann-' + region.substring(0, 2); // TODO: using classic anniversary for now
         }
 
         throw `Unsupported region: [${region}]`;

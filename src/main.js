@@ -209,7 +209,7 @@ function logMsg(message, realm) {
         const region = realmList[realm] || CommodityRealm.getRegionForRealm(realm);
         prefix = ' ' + (region || 'unknown').toUpperCase() + ` realm ${realm}`;
         if (api.hasFactionHouses(region)) {
-            const factionData = api.stripFactionMask(realm);
+            const factionData = api.stripFactionMask(region, realm);
             prefix += ` (${factionData.realm} ${factionData.faction})`;
         }
     }

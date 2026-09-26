@@ -56,7 +56,7 @@ module.exports = new function () {
         }
 
         if (api.hasFactionHouses(region)) {
-            const parts = api.stripFactionMask(realm);
+            const parts = api.stripFactionMask(region, realm);
 
             return `/data/wow/connected-realm/${parts.realm}/auctions/${parts.house}`;
         }

@@ -4,8 +4,6 @@ node_modules/
 
 credentials.sh
 
-game/*/ids.bound.json
-
 addon/live/
 addon/dynamic/
 addon/OribosExchange.toc

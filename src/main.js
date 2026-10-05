@@ -34,7 +34,7 @@ const regions = [
 //    api.REGION_EU_FOREVER,
 //    api.REGION_TW_FOREVER,
 //    api.REGION_KR_FOREVER,
-];
+].filter(region => !process.env.SHATARI_REGIONS || process.env.SHATARI_REGIONS.split(',').includes(region));
 
 const CONCURRENT_REALM_LIMIT = 4;
 
@@ -194,6 +194,15 @@ async function initLists(onlyRegion) {
     // Get realm list
     realmList = await fetchRealmList(onlyRegion);
     //realmList = {54: 'us'};
+    if (process.env.SHATARI_REALMS) {
+        // Testing aid: limit collection to the listed connected realm IDs (comma-separated).
+        const only = process.env.SHATARI_REALMS.split(',').map(id => parseInt(id));
+        for (const id of Object.keys(realmList)) {
+            if (!only.includes(parseInt(id))) {
+                delete realmList[id];
+            }
+        }
+    }
 }
 
 /**

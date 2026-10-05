@@ -7,3 +7,7 @@ credentials.sh
 addon/live/
 addon/dynamic/
 addon/OribosExchange.toc
+
+# Generated price data
+data/
+api/

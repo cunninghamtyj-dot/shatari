@@ -12,3 +12,6 @@ addon/OribosExchange.toc
 data/
 api/
 public-json
+
+# launchd job logs
+logs/

@@ -1,3 +1,13 @@
+# Azeroth Exchange - Back End
+
+This is the data collection back end for **Azeroth Exchange**, a modified version of [Project Shatari - Back End](https://github.com/erorus/shatari) by Gerard Dombroski, used under the Apache License 2.0. Azeroth Exchange is not affiliated with or endorsed by the original project.
+
+**Changes from upstream** include: optional `SHATARI_REGIONS` / `SHATARI_REALMS` environment variables to limit collection while testing, and ignore rules for generated data.
+
+The original README follows.
+
+---
+
 # Project Shatari - Back End
 
 This is the auction data collection code for [Undermine Exchange](https://undermine.exchange), which provides historical auction pricing data for World of Warcraft.

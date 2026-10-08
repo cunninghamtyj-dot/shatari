@@ -2,7 +2,7 @@
 
 This is the data collection back end for **Azeroth Exchange**, a modified version of [Project Shatari - Back End](https://github.com/erorus/shatari) by Gerard Dombroski, used under the Apache License 2.0. Azeroth Exchange is not affiliated with or endorsed by the original project.
 
-**Changes from upstream** include: optional `SHATARI_REGIONS` / `SHATARI_REALMS` environment variables to limit collection while testing, ignore rules for generated data, and macOS launchd jobs in `launchd/` (`launchd/install.sh [regions]` schedules `main.js`, `realm-list.sh` and `make-bound-json.sh`; `launchd/uninstall.sh` removes them).
+**Changes from upstream** include: optional `SHATARI_REGIONS` / `SHATARI_REALMS` environment variables to limit collection while testing, ignore rules for generated data, and macOS launchd jobs in `launchd/` (`launchd/install.sh [regions]` schedules `main.js`, `realm-list.sh` and `make-bound-json.sh`; `launchd/uninstall.sh` removes them; `launchd/backup-data.sh` makes a nightly compressed backup of `data/` to an rclone remote, Dropbox by default).
 
 The original README follows.
 

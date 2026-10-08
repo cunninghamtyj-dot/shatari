@@ -5,7 +5,7 @@
 AGENTS="$HOME/Library/LaunchAgents"
 DOMAIN="gui/$(id -u)"
 
-for job in collector realm-list bound-json; do
+for job in collector realm-list bound-json backup; do
   label="com.azerothexchange.$job"
   launchctl bootout "$DOMAIN/$label" 2>/dev/null && echo "Stopped $label"
   rm -f "$AGENTS/$label.plist"

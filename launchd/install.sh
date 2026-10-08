@@ -7,6 +7,7 @@
 #   collector   main.js; checked every 5 minutes (it exits after 6 hours, launchd restarts it)
 #   realm-list  realm-list.sh; daily at 04:17
 #   bound-json  make-bound-json.sh; hourly at :25 (main.js updates ids.bound.json every 2 hours)
+#   backup      launchd/backup-data.sh; daily at 03:40 (price data to Dropbox via rclone)
 #
 # LaunchAgents run while the user is logged in, so the Mac should log in automatically after a restart.
 
@@ -33,6 +34,12 @@ write_plist () {
   local plist="$AGENTS/$label.plist"
 
   launchctl bootout "$DOMAIN/$label" 2>/dev/null || true
+  # bootout returns before a running job (e.g. the collector finishing up) has fully stopped;
+  # bootstrapping too early fails with "Bootstrap failed: 5". Wait up to 60 seconds.
+  for _ in $(seq 1 60); do
+    launchctl print "$DOMAIN/$label" > /dev/null 2>&1 || break
+    sleep 1
+  done
 
   cat > "$plist" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
@@ -82,6 +89,14 @@ write_plist bound-json "  <key>StartCalendarInterval</key>
   <dict>
     <key>Minute</key>
     <integer>25</integer>
+  </dict>"
+
+write_plist backup "  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Hour</key>
+    <integer>3</integer>
+    <key>Minute</key>
+    <integer>40</integer>
   </dict>"
 
 echo "Done. Regions: $REGIONS. Logs: $DIR/logs/"

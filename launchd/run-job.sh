@@ -1,6 +1,6 @@
 #!/bin/bash
 # Azeroth Exchange: runs one scheduled job for launchd (macOS's replacement for cron).
-# Usage: run-job.sh collector|realm-list|bound-json
+# Usage: run-job.sh collector|realm-list|bound-json|backup
 # Output goes to logs/<job>-YYYY-MM-DD.log; logs older than 14 days are deleted.
 
 JOB="$1"
@@ -27,6 +27,9 @@ case "$JOB" in
     ;;
   bound-json)
     exec ./make-bound-json.sh
+    ;;
+  backup)
+    exec ./launchd/backup-data.sh
     ;;
   *)
     echo "Unknown job: $JOB"
